@@ -1,5 +1,5 @@
 import React from 'react'
-import { Badge, Button, Table, Card } from 'react-bootstrap'
+import { Badge, Button, Table, Card, Modal, Container } from 'react-bootstrap'
 // can import component directly with a slash or class
 import { useLocation, Link } from 'react-router-dom'
 import EmployeeFilter from './EmployeeFilter.jsx'
@@ -49,21 +49,96 @@ function EmployeeTable(props) {
     )
 }
 
-function EmployeeRow(props) {
-    function onDeleteClick() {
-        props.deleteEmployee(props.employee._id)
+class EmployeeRow extends React.Component {
+    constructor(){
+        super()
+        this.state = { 
+            modalVisible: false,
+        }
+        this.handleShowModal = this.handleShowModal.bind(this)
+        this.handleHideModal = this.handleHideModal.bind(this)
+        this.toggleModal = this.toggleModal.bind(this)
+        this.onDeleteClick2 = this.onDeleteClick2.bind(this)
     }
-    return (
-        <tr>
-            <td><Link to={`/edit/${props.employee._id}`}>{props.employee.name}</Link></td>
-            <td>{props.employee.extension}</td>
-            <td>{props.employee.email}</td>
-            <td>{props.employee.title}</td>
-            <td>{props.employee.dateHired.toDateString()}</td>
-            <td>{props.employee.currentlyEmployed ? 'Yes' : 'No'}</td>
-            <td><Button variant="danger" size='small' onClick={onDeleteClick}>X</Button></td>
-        </tr>
-    )
+    handleShowModal(){
+        //change state of modal variable to true
+        this.setState({ modalVisible: true, })
+    }
+    handleHideModal(){
+        this.setState({ modalVisible: false, })
+    }
+    toggleModal(){
+        console.log("running modal toggle")
+        this.setState({modalVisible: !this.state.modalVisible}) 
+    }
+    // deleteEmployee(id) {
+    //     fetch(`/api/employees/${id}`, { method: 'DELETE' })
+    //     .then(response => {
+    //         if (!response.ok) {
+    //             console.log('Failed to delete employee.')
+    //         } else {
+    //             this.loadData()
+    //         }
+    //     })
+    // }
+    onDeleteClick2() {
+        console.log("running deletion on employee"+this.props.employee.name)
+        this.props.deleteEmployee(this.props.employee._id)
+        this.toggleModal()
+    }
+
+    render(){
+        const employee = this.props.employee
+        return(
+            <>
+            <tr>
+                <td><Link to={`/edit/${employee._id}`}>{employee.name}</Link></td>
+                <td>{employee.extension}</td>
+                <td>{employee.email}</td>
+                <td>{employee.title}</td>
+                <td>{employee.dateHired.toDateString()}</td>
+                <td>{employee.currentlyEmployed ? 'Yes' : 'No'}</td>
+                <td><Button variant="danger" size='small' onClick={this.handleShowModal}>X</Button>
+                <Modal show={this.state.modalVisible} onHide={this.toggleModal} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Delete Employee?</Modal.Title>
+                    </Modal.Header>
+
+                    <Modal.Body>
+                        <Container fluid> 
+                            Are you sure you want to delete this employee?
+                        </Container>
+                    </Modal.Body>
+
+                    <Modal.Footer>
+                            <Button 
+                                type='submit' 
+                                variant='danger' 
+                                size='md' 
+                                className='mt-4' 
+                                //onSubmit for forms only
+                                onClick={this.toggleModal}>
+                                    Cancel
+                                </Button>
+
+                                <Button 
+                                type='submit' 
+                                variant='success' 
+                                size='md' 
+                                className='mt-4' 
+                                //onSubmit for forms only
+                                onClick={this.onDeleteClick2}>
+                                    Yes
+                                </Button>
+                    </Modal.Footer>
+                </Modal>
+                </td>
+            </tr> 
+            
+            
+                </>         
+        )
+    }
 }
 
 export default class EmployeeList extends React.Component {
@@ -72,10 +147,12 @@ export default class EmployeeList extends React.Component {
         this.state = { employees: [] }
         this.createEmployee = this.createEmployee.bind(this)
         this.deleteEmployee = this.deleteEmployee.bind(this)
+
     }
     componentDidMount() {
         this.loadData()
     }
+
     loadData() {
         fetch('/api/employees')
         .then(response => response.json())
